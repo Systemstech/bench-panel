@@ -1,0 +1,26 @@
+# dated safety copies made before every edit -- kept locally, not history
+*.bak-*
+*.bak.*
+__pycache__/
+*.pyc
+
+# THIS bench -- addresses and instrument inventory never go in git (plan §9.2)
+site.json
+site.json.bak
+site.json.tmp
+# installed plugins: a runtime directory, filled from catalog/ or an upload
+plugins/
+# imported scripts and what they write: runtime directories, like plugins/
+/scripts/
+/results/
+
+# THIS site's deploy settings and docs page (deploy/README.md)
+local/
+
+# packaging build output
+dist/
+build/
+*.egg-info/
+sim.json
+sim.json.tmp
+sim_results/

@@ -1,0 +1,298 @@
+{
+  "schema": 1,
+  "id": "e3641a",
+  "name": "Keysight/Agilent E3641A DC power supply",
+  "vendor": "Agilent / Keysight",
+  "model": "E3641A",
+  "version": "1.2.2",
+  "idn_match": [
+    "E3641A"
+  ],
+  "has_output": true,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "dc_source"
+  ],
+  "tested_on": {
+    "gpib-gateway": "2026-09-22, ICS 8065"
+  },
+  "driver": {
+    "file": "driver.py",
+    "class": "E3641A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "E3641ASim"
+  },
+  "description": "35 V / 0.8 A or 60 V / 0.5 A, 30 W single-output supply. Setpoints, range, OVP, output with two-click arm, five saved setups.",
+  "quirks": [
+    {
+      "id": "syst-loc-rs232-only",
+      "note": "SYST:LOC / SYST:REM / SYST:RWL are RS-232 only; over GPIB they queue +514. The panel releases with device_local."
+    },
+    {
+      "id": "cc-cv-bits-inverted",
+      "note": "STAT:QUES:COND reports what is UNREGULATED: bit 0 set = constant CURRENT, bit 1 set = constant VOLTAGE (manual Table 3-5)."
+    },
+    {
+      "id": "power-on-reset",
+      "note": "No battery. Always powers up at 0 V, 0.8 A, OVP 66 V, output OFF. Five setups survive in non-volatile memory."
+    },
+    {
+      "id": "recall-restores-output",
+      "note": "A saved setup includes the output state, so *RCL can switch the output ON. The panel refuses Save with the output on and makes Recall two-click."
+    },
+    {
+      "id": "high-range-current",
+      "note": "HIGH (P60V) caps current at 0.5 A, not 0.8 A. Some listings claim 2.5 A; it is 0.5 A."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "actions": {
+    "set_v": {
+      "example": {
+        "value": 1.0
+      },
+      "doc": "Set the output VOLTAGE setpoint. Refused (nothing sent) above the selected range's maximum.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. vmax of the range (35 V LOW, 60 V HIGH)",
+          "unit": "V",
+          "min": 0,
+          "max": 60
+        }
+      },
+      "scpi": "VOLT <value>",
+      "ref": "p. 84"
+    },
+    "set_i": {
+      "example": {
+        "value": 0.1
+      },
+      "doc": "Set the CURRENT LIMIT. Refused above the range's maximum (0.8 A LOW, 0.5 A HIGH).",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. imax of the range",
+          "unit": "A",
+          "min": 0,
+          "max": 0.8
+        }
+      },
+      "scpi": "CURR <value>",
+      "ref": "p. 82"
+    },
+    "set_range": {
+      "example": {
+        "value": "LOW"
+      },
+      "doc": "Select the output range. HIGH also caps the current limit at 0.5 A; the supply clips setpoints itself.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "LOW",
+            "HIGH"
+          ],
+          "doc": "LOW = 35 V / 0.8 A, HIGH = 60 V / 0.5 A"
+        }
+      },
+      "scpi": "VOLT:RANG P35V | P60V",
+      "ref": "p. 87"
+    },
+    "output": {
+      "example": {
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "Switch the output on or off. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = ON, false = OFF"
+        }
+      },
+      "scpi": "OUTP ON | OUTP OFF",
+      "ref": "p. 91"
+    },
+    "set_ovp": {
+      "example": {
+        "value": 5.0
+      },
+      "doc": "Set the over-voltage protection level.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "trip level",
+          "unit": "V"
+        }
+      },
+      "scpi": "VOLT:PROT <value>",
+      "ref": "p. 86"
+    },
+    "ovp_state": {
+      "example": {
+        "value": true
+      },
+      "doc": "Enable or disable over-voltage protection.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = OVP enabled"
+        }
+      },
+      "scpi": "VOLT:PROT:STAT ON | OFF",
+      "ref": "p. 86"
+    },
+    "ovp_clear": {
+      "doc": "Clear a tripped over-voltage protection.",
+      "args": {},
+      "scpi": "VOLT:PROT:CLE",
+      "ref": "p. 86"
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 92"
+    },
+    "save_state": {
+      "example": {
+        "slot": 1,
+        "name": ""
+      },
+      "doc": "Save the setup to slot 1-5, optionally named. Refused while the output is ON.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-5",
+          "min": 1,
+          "max": 5
+        },
+        "name": {
+          "type": "str",
+          "doc": "optional, up to 9 letters/digits/_ (what the front panel's Recall menu shows)"
+        }
+      },
+      "scpi": "*SAV <slot>; MEM:STAT:NAME <slot>,'<name>'",
+      "ref": "*SAV p. 95; MEMory:STATe:NAME p. 96"
+    },
+    "recall_state": {
+      "example": {
+        "slot": 1
+      },
+      "confirm": "always",
+      "doc": "Recall slot 1-5. ALWAYS needs confirmed=True: a saved setup can switch the output ON.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-5",
+          "min": 1,
+          "max": 5
+        }
+      },
+      "scpi": "*RCL <slot>",
+      "ref": "p. 95"
+    }
+  },
+  "manual": {
+    "title": "Agilent E364xA Single Output DC Power Supplies User's and Service Guide",
+    "part": "E3640-90001",
+    "edition": "Tenth Edition, August 6, 2013",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "state": {
+    "v_set": {
+      "type": "float",
+      "doc": "voltage setpoint, read back",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_set": {
+      "type": "float",
+      "doc": "current limit, read back",
+      "nullable": true,
+      "unit": "A"
+    },
+    "v_meas": {
+      "type": "float",
+      "doc": "measured output voltage (the supply's own readback)",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_meas": {
+      "type": "float",
+      "doc": "measured output current",
+      "nullable": true,
+      "unit": "A"
+    },
+    "output": {
+      "type": "bool",
+      "doc": "output ON",
+      "nullable": true
+    },
+    "range": {
+      "type": "str",
+      "doc": "LOW or HIGH",
+      "nullable": true
+    },
+    "ovp": {
+      "type": "float",
+      "doc": "over-voltage protection level",
+      "nullable": true,
+      "unit": "V"
+    },
+    "ovp_state": {
+      "type": "bool",
+      "doc": "OVP enabled",
+      "nullable": true
+    },
+    "ovp_tripped": {
+      "type": "bool",
+      "doc": "OVP has tripped (output is then off until ovp_clear)",
+      "nullable": true
+    },
+    "cc": {
+      "type": "bool",
+      "doc": "in CONSTANT CURRENT, i.e. something is drawing the current limit",
+      "nullable": true
+    },
+    "mode": {
+      "type": "str",
+      "doc": "\"CC\", \"CV\", or null when the output is off",
+      "nullable": true
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last clear_errors / drain",
+      "nullable": true
+    },
+    "slot_names": {
+      "type": "list",
+      "doc": "the five saved-setup names"
+    },
+    "vmax": {
+      "type": "float",
+      "doc": "the selected range's voltage maximum",
+      "unit": "V"
+    },
+    "imax": {
+      "type": "float",
+      "doc": "the selected range's current maximum",
+      "unit": "A"
+    }
+  }
+}

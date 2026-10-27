@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "id": "8648a",
+  "name": "HP 8648A signal generator",
+  "vendor": "HP / Agilent",
+  "model": "8648A",
+  "version": "1.2.1",
+  "idn_match": [
+    "8648A"
+  ],
+  "has_output": true,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "rf_source"
+  ],
+  "tested_on": {
+    "gpib-gateway": "2026-09-22, ICS 8065"
+  },
+  "driver": {
+    "file": "driver.py",
+    "class": "HP8648A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "Hp8648ASim"
+  },
+  "description": "100 kHz - 1000 MHz, -136 to +13 dBm. Frequency, absolute level, RF output with two-click arm. Reference mode shown read-only.",
+  "quirks": [
+    {
+      "id": "reference-mode",
+      "note": "With POW:REF:STAT on, POW:AMPL is a DELTA from the stored reference. It is non-volatile. The panel shows and sets the ABSOLUTE level and never writes reference mode."
+    },
+    {
+      "id": "battery-backed-state",
+      "note": "Battery-backed (A3BT1, 3.0 V 1.2 Ah cell, HP 1420-0338). Powers up in its last state with RF OFF. Error 627 = battery RAM lost."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "actions": {
+    "set_freq": {
+      "example": {
+        "value": 915
+      },
+      "doc": "CW frequency. NOTE: the value is in MHz, but state freq_hz is in Hz.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0.1 .. 1000",
+          "unit": "MHz",
+          "min": 0.1,
+          "max": 1000
+        }
+      },
+      "scpi": "FREQ:CW <value> MHZ",
+      "ref": "p. 2-24"
+    },
+    "set_ampl": {
+      "example": {
+        "value": -55
+      },
+      "doc": "The ABSOLUTE level wanted at the connector. With reference mode on, the panel subtracts the reference before sending.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "-136 .. +13",
+          "unit": "dBm",
+          "min": -136,
+          "max": 13
+        }
+      },
+      "scpi": "POW:AMPL <value - ref if ref_on> DBM",
+      "ref": "p. 2-38"
+    },
+    "output": {
+      "example": {
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "RF output on/off. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = ON"
+        }
+      },
+      "scpi": "OUTP:STAT ON | OFF",
+      "ref": "p. 2-24"
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 2-40"
+    }
+  },
+  "manual": {
+    "title": "HP 8648A/B/C/D Signal Generator Operation and Service Guide",
+    "part": "08648-90048",
+    "edition": "April 1999",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "state": {
+    "freq_hz": {
+      "type": "float",
+      "doc": "CW frequency",
+      "nullable": true,
+      "unit": "Hz"
+    },
+    "ampl_entered": {
+      "type": "float",
+      "doc": "what the instrument holds -- a DELTA when ref_on",
+      "nullable": true,
+      "unit": "dBm"
+    },
+    "ampl_abs": {
+      "type": "float",
+      "doc": "what leaves the connector (use this one)",
+      "nullable": true,
+      "unit": "dBm"
+    },
+    "ref_on": {
+      "type": "bool",
+      "doc": "REFERENCE MODE on (read-only here)",
+      "nullable": true
+    },
+    "ref_dbm": {
+      "type": "float",
+      "doc": "the stored reference",
+      "nullable": true,
+      "unit": "dBm"
+    },
+    "att_auto": {
+      "type": "bool",
+      "doc": "attenuator in auto",
+      "nullable": true
+    },
+    "output": {
+      "type": "bool",
+      "doc": "RF output ON",
+      "nullable": true
+    },
+    "mod": {
+      "type": "list",
+      "doc": "modulations that are ON (AM, FM, PM, PULSE)"
+    },
+    "warn": {
+      "type": "str",
+      "doc": "why the level may not be what you think, or null",
+      "nullable": true
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last clear_errors",
+      "nullable": true
+    },
+    "ampl_min": {
+      "type": "float",
+      "doc": "lowest level",
+      "unit": "dBm"
+    },
+    "ampl_max": {
+      "type": "float",
+      "doc": "highest level",
+      "unit": "dBm"
+    },
+    "freq_min_hz": {
+      "type": "float",
+      "doc": "lowest frequency",
+      "unit": "Hz"
+    },
+    "freq_max_hz": {
+      "type": "float",
+      "doc": "highest frequency",
+      "unit": "Hz"
+    }
+  }
+}

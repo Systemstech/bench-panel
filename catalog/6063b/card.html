@@ -1,0 +1,63 @@
+<!-- 6063B card body. Elements are found by data-k, never by id: the same card
+     can be on the page twice. -->
+<div class="lcd">
+  <div class="big"><span data-k="v">--.--</span><span class="u">V</span></div>
+  <div class="big" style="font-size:clamp(20px,4.4vw,32px);margin-top:4px">
+    <span data-k="i">-.---</span><span class="u">A</span>
+    <span style="margin-left:18px" data-k="p">--.-</span><span class="u">W</span></div>
+  <div class="stats"><span>CC <b data-k="iset">--</b> A <small data-k="irng"></small></span>
+    <span>CR <b data-k="rset">--</b> Ω <small data-k="rrng"></small></span>
+    <span>CV <b data-k="vset">--</b> V</span>
+    <span>OCP <b data-k="ocp">--</b></span></div>
+  <div class="stats" data-k="warn" style="display:none;color:var(--bad,#e06c6c)"><span data-k="warntext"></span></div>
+</div>
+
+<div class="sec">
+  <h4>Mode &mdash; changes only with the input OFF</h4>
+  <div class="row">
+    <button data-k="m-CC">CC · current</button>
+    <button data-k="m-CR">CR · resistance</button>
+    <button data-k="m-CV">CV · voltage</button>
+  </div>
+
+  <h4>Levels</h4>
+  <div class="row">
+    <label>I</label><input type="number" data-k="in-i" step="0.001" min="0" value="0.100">
+    <button data-k="set-i">Set I</button>
+    <button data-k="ir-LOW">1 A range</button><button data-k="ir-HIGH">10 A range</button>
+  </div>
+  <div class="row">
+    <label>R</label><input type="number" data-k="in-r" step="0.1" min="0" value="1000">
+    <button data-k="set-r">Set R</button>
+    <button data-k="rr-LOW">24 Ω</button><button data-k="rr-MID">24 kΩ</button><button data-k="rr-HIGH">240 kΩ</button>
+  </div>
+  <div class="row">
+    <label>V</label><input type="number" data-k="in-v" step="0.01" min="0" max="240" value="5.00">
+    <button data-k="set-v">Set V</button>
+  </div>
+
+  <h4>Current protection (0–10.2 A, trips after the delay)</h4>
+  <div class="row">
+    <input type="number" data-k="in-ocp" step="0.01" min="0" max="10.2" value="2.00">
+    <button data-k="set-ocp">Set level</button>
+    <label>delay s</label><input type="number" data-k="in-del" step="0.1" min="0" max="60" value="1.0" style="width:80px">
+    <button data-k="set-del">Set delay</button>
+    <button data-k="ocp-on">On</button>
+    <button data-k="ocp-off">Off</button>
+  </div>
+
+  <h4>Input</h4>
+  <div class="row">
+    <button class="go" data-k="in-on">INPUT ON</button>
+    <button class="danger" data-k="in-off">INPUT OFF</button>
+    <button data-k="clear">Clear protection</button>
+    <button data-k="errors">Read errors</button>
+  </div>
+
+  <h4>Saved states 1–6 &mdash; lost at power-off; slot 0 (power-on) is never written</h4>
+  <div class="grid" data-k="slots"></div>
+  <div class="row" style="margin-top:8px">
+    <button data-k="save">Save to 1</button>
+    <button class="go" data-k="recall">Recall 1</button>
+  </div>
+</div>

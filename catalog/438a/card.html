@@ -1,0 +1,45 @@
+<!-- 438A card body. Elements are found by data-k, never by id: the same card
+     can be on the page twice. -->
+<div class="lcd">
+  <div class="big"><span data-k="rd">--.--</span><span class="u" data-k="unit"></span></div>
+  <div class="stats"><span>Mode <b data-k="mode">--</b></span>
+    <span>A: CF <b data-k="cfa">--</b>% <small data-k="xa"></small></span>
+    <span>B: CF <b data-k="cfb">--</b>% <small data-k="xb"></small></span></div>
+  <div class="stats" data-k="warn" style="display:none;color:var(--bad,#e06c6c)"><span data-k="warntext"></span></div>
+  <div class="stats" data-k="note" style="display:none"><span data-k="notetext"></span></div>
+</div>
+
+<div class="sec">
+  <h4>Measure</h4>
+  <div class="grid" data-k="modes"></div>
+  <div class="row" style="margin-top:8px">
+    <button data-k="u-W">W</button><button data-k="u-dBm">dBm</button>
+    <button data-k="rel-on">REL on</button><button data-k="rel-off">REL off</button>
+  </div>
+
+  <h4>Channel settings &mdash; for sensor <span data-k="chname">A</span></h4>
+  <div class="row"><button data-k="ch-A">Sensor A</button><button data-k="ch-B">Sensor B</button></div>
+  <div class="row">
+    <label>Cal factor %</label><input type="number" data-k="in-cf" step="0.1" min="1" max="150" value="100.0">
+    <button data-k="set-cf">Set</button>
+    <label>Offset dB</label><input type="number" data-k="in-os" step="0.01" min="-99.99" max="99.99" value="0.00" style="width:90px">
+    <button data-k="set-os">Set</button>
+  </div>
+  <div class="row"><label>Range &mdash; 1 is the most sensitive, 10 dB each</label></div>
+  <div class="grid" data-k="ranges"></div>
+  <div class="row" style="margin-top:8px"><label>Filter &mdash; averages 2<sup>n</sup> readings</label></div>
+  <div class="grid" data-k="filters"></div>
+
+  <h4>Zero and calibrate &mdash; one channel at a time, zero first</h4>
+  <div class="row">
+    <button data-k="zero">ZERO A</button>
+    <label>Ref cal factor %</label><input type="number" data-k="in-ref" step="0.1" min="50" max="120" value="100.0" style="width:90px">
+    <button data-k="cal">CAL ADJ A</button>
+  </div>
+
+  <h4>POWER REF &mdash; 1.00 mW, 50 MHz</h4>
+  <div class="row">
+    <button class="go" data-k="osc-on">REF ON</button>
+    <button class="danger" data-k="osc-off">REF OFF</button>
+  </div>
+</div>

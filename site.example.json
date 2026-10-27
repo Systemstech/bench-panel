@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "defaults": {"gateway": "192.0.2.60"},
+  "instruments": [
+    {"id": "34401a-1", "plugin": "34401a", "name": "Bench DMM",
+     "connection": {"type": "gpib-gateway", "gateway": "192.0.2.60", "address": 22}},
+    {"id": "33522a-1", "plugin": "33522a", "name": "33522A",
+     "connection": {"type": "vxi11", "host": "192.0.2.5"}},
+    {"id": "e3641a-1", "plugin": "e3641a", "name": "Supply",
+     "connection": {"type": "visa", "resource": "TCPIP0::127.0.0.1::5026::SOCKET"}}
+  ]
+}

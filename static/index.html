@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench Panel</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2311141a'/%3E%3Crect x='5' y='8' width='22' height='11' rx='2' fill='%2304121a' stroke='%230d2b38'/%3E%3Ctext x='16' y='16.5' font-family='monospace' font-size='7' fill='%233fd2ff' text-anchor='middle'%3E8.88%3C/text%3E%3Ccircle cx='9' cy='24' r='2' fill='%2339d353'/%3E%3Ccircle cx='16' cy='24' r='2' fill='%232f81f7'/%3E%3Ccircle cx='23' cy='24' r='2' fill='%23d29922'/%3E%3C/svg%3E">
+<!-- Relative, not /static/...: behind a reverse proxy at /bench/ an absolute path
+     lands at the site root instead of here. That only works if the page URL ends
+     in "/": opened as ".../bench", "static/x" resolves to "/static/x". Fix the URL
+     first, before anything relative is requested. -->
+<script>
+  if (!location.pathname.endsWith('/') && !/\.[a-z0-9]+$/i.test(location.pathname))
+    location.replace(location.pathname + '/' + location.search);
+</script>
+<link rel="stylesheet" href="static/style.css?v=6">
+</head>
+<body>
+<header id="top">
+  <h1 id="apptitle">Bench Panel</h1>
+  <span class="pill" id="clock">--:--:--</span>
+  <span class="grow"></span>
+  <span class="pill run" id="scrpill" hidden onclick="Scripts.open()" title="Open Scripts"></span>
+  <span class="pill" id="otherpill" hidden></span>
+  <button id="mgrbtn" onclick="SIMULATED ? SimWiring.open() : Manager.open()">Instruments</button>
+  <button id="scrbtn" onclick="Scripts.open()">Scripts</button>
+  <a class="btn" id="simlink" href="sim/" target="benchsim" title="The same panel on a simulated copy of this bench">Simulator</a>
+  <button id="pollbtn" onclick="togglePoll()">Pause polling</button>
+  <button class="danger" id="alloff" onclick="allOff()">ALL OUTPUTS OFF</button>
+</header>
+
+<div class="simbanner" id="simbanner" hidden>
+  <b>SIMULATED BENCH.</b> Every instrument here is a model running inside the panel &mdash; nothing on this
+  page reaches real hardware. The drivers and scripts are the real ones. Numbers show that a script's
+  <i>logic</i> works, never how accurate an instrument is. <a href="../">&larr; the real bench</a>
+</div>
+<div class="wrap" id="cards"></div>
+<div class="msg" id="globalmsg" style="padding:0 18px"></div>
+
+<div id="log"><h4>SCPI traffic</h4><div id="logbody"></div></div>
+
+<div id="mgr" onclick="if(event.target===this)Manager.close()">
+  <div class="mbox">
+    <header><h1>Instruments</h1><span class="grow"></span>
+      <button onclick="Manager.close()">Close</button></header>
+
+    <section>
+      <h3>On this bench</h3>
+      <div id="m-bench"></div>
+    </section>
+
+    <section>
+      <h3>Add an instrument</h3>
+      <div class="form">
+        <label for="m-plugin">Instrument type</label><select id="m-plugin"></select>
+        <label for="m-name">Name on its card</label>
+        <input type="text" id="m-name" maxlength="40" placeholder="(the model name)">
+        <label for="m-type">Connected by</label><select id="m-type"></select>
+        <label for="m-f1" id="m-l1">Gateway</label><input type="text" id="m-f1">
+        <label for="m-f2" id="m-l2">GPIB address</label><input type="text" id="m-f2">
+        <span></span><div class="row"><button class="go" onclick="Manager.add()">Add to the bench</button></div>
+      </div>
+      <p class="note" id="m-addmsg"></p>
+    </section>
+
+    <section>
+      <h3>Installed plugins</h3>
+      <div id="m-installed"></div>
+    </section>
+
+    <section>
+      <h3>Get plugins &mdash; from this program's catalog, or a .zip you choose</h3>
+      <div id="m-catalog"></div>
+      <div class="row" style="margin-top:10px">
+        <input type="file" id="m-zip" accept=".zip">
+        <button onclick="Manager.inspectZip()">Check this .zip</button>
+      </div>
+      <p class="note">A plugin runs code on this computer with your instruments in reach, so
+        nothing installs until you have seen what it is and confirmed. There is no install
+        from a web link.</p>
+      <div id="m-inspect"></div>
+    </section>
+  </div>
+</div>
+
+<div id="scr" onclick="if(event.target===this)Scripts.close()">
+  <div class="mbox">
+    <header><h1>Scripts</h1><span class="grow"></span>
+      <button onclick="Scripts.close()">Close</button></header>
+
+    <section id="s-runsec">
+      <h3>Running now</h3>
+      <div id="s-run"></div>
+      <pre id="s-log" class="slog" hidden></pre>
+    </section>
+
+    <section>
+      <div class="row"><h3 style="margin:0">Scripts on this bench</h3><span class="grow"></span>
+        <button onclick="Editor.newScript()">New script&hellip;</button></div>
+      <div id="s-installed" style="margin-top:10px"></div>
+      <div id="s-form"></div>
+    </section>
+
+    <section>
+      <h3>Results &mdash; files your scripts wrote, and every run's log</h3>
+      <div id="s-results"></div>
+    </section>
+
+    <section>
+      <h3>Import a script &mdash; from this program's catalog, or a .py you choose</h3>
+      <div id="s-catalog"></div>
+      <div class="row" style="margin-top:10px">
+        <input type="file" id="s-file" accept=".py">
+        <button onclick="Scripts.inspectUpload()">Check this .py</button>
+      </div>
+      <p class="note">A script is Python that runs on this computer with your instruments in
+        reach, so nothing is imported until you have read it and confirmed. There is no
+        import from a web link. How to write one: SCRIPTS.md.</p>
+      <div id="s-inspect"></div>
+    </section>
+  </div>
+</div>
+
+<div id="simw" onclick="if(event.target===this)SimWiring.close()">
+  <div class="mbox">
+    <header><h1>Simulated bench &mdash; wiring and starting states</h1><span class="grow"></span>
+      <button onclick="SimWiring.close()">Close</button></header>
+    <section>
+      <h3>Wires</h3>
+      <div id="w-wires"></div>
+      <div class="row" style="margin-top:10px">
+        <select id="w-out"></select><span>&rarr;</span><select id="w-in"></select>
+        <button class="go" onclick="SimWiring.connect()">Connect</button>
+      </div>
+      <p class="note">One wire per port: connecting a port that already has one moves it. A script that
+        declares <code>"wiring"</code> can wire the bench itself when you run it.</p>
+      <p class="bad" id="w-msg"></p>
+    </section>
+    <section>
+      <h3>Instruments &mdash; the same as the real bench, plus one of every other plugin</h3>
+      <div id="w-insts"></div>
+      <p class="note">A starting state is a situation at the front panel (an output left on, a unit
+        changed) &mdash; use one to check that a script notices and refuses. Choosing one switches that
+        instrument OFF in the panel first. "Not answering" makes it behave like one that is switched off.</p>
+    </section>
+  </div>
+</div>
+
+<div id="ed">
+  <div class="edbox">
+    <header><h1 id="ed-title">Editor</h1><span class="pill" id="ed-state"></span><span class="grow"></span>
+      <button class="go" id="ed-save" title="Ctrl+S">Save</button>
+      <button id="ed-sim">Save &amp; simulate</button>
+      <button id="ed-close">Close</button></header>
+    <div id="ed-new" hidden>
+      <div class="form">
+        <label for="ed-new-id">File name</label><input type="text" id="ed-new-id" placeholder="my_check">
+        <label for="ed-new-name">Name</label><input type="text" id="ed-new-name" placeholder="What it is, in a few words">
+        <label>Instruments</label><div id="ed-new-uses" class="chks"></div>
+        <label for="ed-new-out">Outputs</label><label><input type="checkbox" id="ed-new-out"> it will switch an output on</label>
+        <span></span><div class="row"><button class="go" id="ed-create">Start from the template</button></div>
+      </div>
+      <p class="bad" id="ed-new-msg"></p>
+    </div>
+    <div class="edmain" id="ed-main">
+      <div class="edcode">
+        <div class="code"><div class="gutter"><div id="ed-gutter"></div></div>
+          <div class="codewrap"><pre id="ed-hl" aria-hidden="true"></pre>
+            <textarea id="ed-ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
+              aria-label="Script source"></textarea>
+            <div id="ed-pop" hidden></div></div></div>
+        <div class="edfoot"><div id="ed-hint"></div><div id="ed-msg" class="note"></div></div>
+      </div>
+      <aside class="edside">
+        <div class="tabs row"><button data-tab="checks" class="sel">Checks</button><button data-tab="ref">Reference</button></div>
+        <div id="ed-checks"></div>
+        <div id="ed-ref" hidden></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script src="static/app.js?v=7"></script>
+<script src="static/editor.js?v=1"></script>
+</body>
+</html>

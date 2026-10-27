@@ -1,0 +1,347 @@
+{
+  "schema": 1,
+  "id": "e3632a",
+  "name": "Agilent/HP E3632A DC power supply",
+  "vendor": "Agilent / HP",
+  "model": "E3632A",
+  "version": "1.0.1",
+  "idn_match": [
+    "E3632A"
+  ],
+  "has_output": true,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "dc_source"
+  ],
+  "tested_on": {},
+  "driver": {
+    "file": "driver.py",
+    "class": "E3632A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "E3632ASim"
+  },
+  "description": "15 V / 7 A or 30 V / 4 A, 120 W single-output supply. Setpoints, range, OVP and OCP, output with two-click arm, three saved setups, and a readback plausibility check.",
+  "quirks": [
+    {
+      "id": "syst-loc-rs232-only",
+      "note": "SYST:LOC / SYST:REM / SYST:RWL are RS-232 only (p. 99). The panel releases with device_local."
+    },
+    {
+      "id": "ques-cond-3-is-failure",
+      "note": "STAT:QUES:COND? 1 = CC, 2 = CV, 0 = output off, 3 = FAILURE (p. 108). Shown as mode FAIL."
+    },
+    {
+      "id": "power-on-reset",
+      "note": "Powers up in the *RST state: 0 V, 7 A, P15V, OVP 32 V on, OCP 7.5 A on, output OFF (p. 94)."
+    },
+    {
+      "id": "recall-restores-output",
+      "note": "A saved setup includes OUTP (p. 95), so *RCL can switch the output ON. Save is refused with the output on; Recall is two-click."
+    },
+    {
+      "id": "readback-is-checked",
+      "note": "A faulty readback ADC raises no error and *TST? still passes. readback_ok compares readback with what CV/CC guarantees; false means do not trust v_meas/i_meas -- measure with a meter."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "manual": {
+    "title": "Agilent E3632A DC Power Supply User's Guide",
+    "part": "E3632-90001",
+    "edition": "October 2007",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "actions": {
+    "set_v": {
+      "example": {
+        "value": 1.0
+      },
+      "doc": "Set the output VOLTAGE setpoint. Refused (nothing sent) above the selected range's rating.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. vmax of the range (15 V LOW, 30 V HIGH)",
+          "unit": "V",
+          "min": 0,
+          "max": 30
+        }
+      },
+      "scpi": "VOLT <value>",
+      "ref": "p. 85"
+    },
+    "set_i": {
+      "example": {
+        "value": 0.5
+      },
+      "doc": "Set the CURRENT LIMIT. Refused above the range's rating (7 A LOW, 4 A HIGH).",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. imax of the range",
+          "unit": "A",
+          "min": 0,
+          "max": 7
+        }
+      },
+      "scpi": "CURR <value>",
+      "ref": "p. 82"
+    },
+    "set_range": {
+      "example": {
+        "value": "LOW"
+      },
+      "doc": "Select the output range. The supply clips existing setpoints to the new range itself.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "LOW",
+            "HIGH"
+          ],
+          "doc": "LOW = 15 V / 7 A, HIGH = 30 V / 4 A"
+        }
+      },
+      "scpi": "VOLT:RANG P15V | P30V",
+      "ref": "p. 87"
+    },
+    "output": {
+      "example": {
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "Switch the output on or off. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = ON, false = OFF"
+        }
+      },
+      "scpi": "OUTP ON | OUTP OFF",
+      "ref": "p. 92"
+    },
+    "set_ovp": {
+      "example": {
+        "value": 5.0
+      },
+      "doc": "Set the over-voltage protection level. Refused outside 1-32 V.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "trip level, 1-32 V",
+          "unit": "V",
+          "min": 1,
+          "max": 32
+        }
+      },
+      "scpi": "VOLT:PROT <value>",
+      "ref": "p. 86"
+    },
+    "ovp_state": {
+      "example": {
+        "value": true
+      },
+      "doc": "Enable or disable over-voltage protection.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = OVP enabled"
+        }
+      },
+      "scpi": "VOLT:PROT:STAT ON | OFF",
+      "ref": "p. 87"
+    },
+    "ovp_clear": {
+      "doc": "Clear a tripped OVP. Lower the voltage or raise the OVP level first.",
+      "args": {},
+      "scpi": "VOLT:PROT:CLE",
+      "ref": "p. 87"
+    },
+    "set_ocp": {
+      "example": {
+        "value": 1.0
+      },
+      "doc": "Set the over-current protection level. Refused outside 0-7.5 A.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "trip level, 0-7.5 A",
+          "unit": "A",
+          "min": 0,
+          "max": 7.5
+        }
+      },
+      "scpi": "CURR:PROT <value>",
+      "ref": "p. 84"
+    },
+    "ocp_state": {
+      "example": {
+        "value": true
+      },
+      "doc": "Enable or disable over-current protection.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = OCP enabled"
+        }
+      },
+      "scpi": "CURR:PROT:STAT ON | OFF",
+      "ref": "p. 84"
+    },
+    "ocp_clear": {
+      "doc": "Clear a tripped OCP. Lower the current or raise the OCP level first.",
+      "args": {},
+      "scpi": "CURR:PROT:CLE",
+      "ref": "p. 84"
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 108"
+    },
+    "save_state": {
+      "example": {
+        "slot": 1
+      },
+      "doc": "Save the setup to slot 1-3. Refused while the output is ON.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-3",
+          "min": 1,
+          "max": 3
+        }
+      },
+      "scpi": "*SAV <slot>",
+      "ref": "p. 95"
+    },
+    "recall_state": {
+      "example": {
+        "slot": 1
+      },
+      "confirm": "always",
+      "doc": "Recall slot 1-3. ALWAYS needs confirmed=True: a saved setup can switch the output ON.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-3",
+          "min": 1,
+          "max": 3
+        }
+      },
+      "scpi": "*RCL <slot>",
+      "ref": "p. 95"
+    }
+  },
+  "state": {
+    "v_set": {
+      "type": "float",
+      "doc": "voltage setpoint, read back",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_set": {
+      "type": "float",
+      "doc": "current limit, read back",
+      "nullable": true,
+      "unit": "A"
+    },
+    "v_meas": {
+      "type": "float",
+      "doc": "measured voltage at the sense terminals (the supply's own readback -- see readback_ok)",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_meas": {
+      "type": "float",
+      "doc": "measured output current (the supply's own readback -- see readback_ok)",
+      "nullable": true,
+      "unit": "A"
+    },
+    "readback_ok": {
+      "type": "bool",
+      "doc": "readback agrees with what CV/CC guarantees; false = do not trust v_meas/i_meas; null = output off, nothing to check",
+      "nullable": true
+    },
+    "output": {
+      "type": "bool",
+      "doc": "output ON",
+      "nullable": true
+    },
+    "range": {
+      "type": "str",
+      "doc": "LOW or HIGH",
+      "nullable": true
+    },
+    "ovp": {
+      "type": "float",
+      "doc": "over-voltage protection level",
+      "nullable": true,
+      "unit": "V"
+    },
+    "ovp_state": {
+      "type": "bool",
+      "doc": "OVP enabled",
+      "nullable": true
+    },
+    "ovp_tripped": {
+      "type": "bool",
+      "doc": "OVP has tripped (until ovp_clear)",
+      "nullable": true
+    },
+    "ocp": {
+      "type": "float",
+      "doc": "over-current protection level",
+      "nullable": true,
+      "unit": "A"
+    },
+    "ocp_state": {
+      "type": "bool",
+      "doc": "OCP enabled",
+      "nullable": true
+    },
+    "ocp_tripped": {
+      "type": "bool",
+      "doc": "OCP has tripped (until ocp_clear)",
+      "nullable": true
+    },
+    "cc": {
+      "type": "bool",
+      "doc": "in CONSTANT CURRENT",
+      "nullable": true
+    },
+    "mode": {
+      "type": "str",
+      "doc": "\"CC\", \"CV\", \"FAIL\", or null when the output is off",
+      "nullable": true
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last clear_errors / drain",
+      "nullable": true
+    },
+    "vmax": {
+      "type": "float",
+      "doc": "the selected range's voltage rating",
+      "unit": "V"
+    },
+    "imax": {
+      "type": "float",
+      "doc": "the selected range's current rating",
+      "unit": "A"
+    }
+  }
+}

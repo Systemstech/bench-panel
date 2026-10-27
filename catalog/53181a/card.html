@@ -1,0 +1,44 @@
+<!-- 53181A card body. Elements are found by data-k, never by id. -->
+<div class="lcd">
+  <div class="big"><span data-k="val">------</span><span class="u" data-k="unit"></span></div>
+  <div class="stats">
+    <span>MIN <b data-k="min">--</b></span>
+    <span>MAX <b data-k="max">--</b></span>
+    <span>AVG <b data-k="avg">--</b></span>
+    <span>N <b data-k="n">0</b></span>
+  </div>
+</div>
+
+<div class="sec">
+  <h4>Measurement</h4>
+  <div class="grid" data-k="funcs"></div>
+
+  <h4>Gate time &mdash; longer gate, more digits</h4>
+  <div class="grid" data-k="gates"></div>
+  <div class="row" style="margin-top:6px">
+    <input type="number" data-k="in-gate" step="any" min="0.001" max="1000" value="1"><label>s</label>
+    <button data-k="set-gate">Set gate</button>
+  </div>
+
+  <h4>Channel 1 input</h4>
+  <div class="row">
+    <button data-k="imp-50">50 &Omega;</button><button data-k="imp-1E6">1 M&Omega;</button>
+    <span style="width:10px"></span>
+    <button data-k="coup-AC">AC</button><button data-k="coup-DC">DC</button>
+    <span style="width:10px"></span>
+    <button data-k="att-1">&times;1</button><button data-k="att-10">&times;10</button>
+    <span style="width:10px"></span>
+    <button data-k="filt">100 kHz filter</button>
+  </div>
+  <p style="margin:8px 0 0;color:var(--dim);font-size:12px" data-k="ch2"></p>
+
+  <h4>Saved setups 1&ndash;20</h4>
+  <div class="row">
+    <input type="number" data-k="slot" min="1" max="20" step="1" value="1" style="width:70px">
+    <button data-k="save">Save</button>
+    <button data-k="recall">Recall</button>
+    <span style="width:10px"></span>
+    <button data-k="reset">Reset min/max/avg</button>
+    <button data-k="errors">Read errors</button>
+  </div>
+</div>

@@ -1,0 +1,26 @@
+<!-- 34401A card body. Elements are found by data-k, never by id. -->
+<div class="lcd">
+  <div class="big"><span data-k="val">------</span><span class="u" data-k="unit">VDC</span></div>
+  <div class="stats">
+    <span>MIN <b data-k="min">--</b></span>
+    <span>MAX <b data-k="max">--</b></span>
+    <span>AVG <b data-k="avg">--</b></span>
+    <span>N <b data-k="n">0</b></span>
+  </div>
+</div>
+
+<div class="sec">
+  <h4>Measurement</h4>
+  <div class="grid" data-k="funcs"></div>
+
+  <h4>Range</h4>
+  <div class="grid" data-k="ranges"></div>
+
+  <h4>Integration — NPLC is an accuracy control, not a speed switch</h4>
+  <div class="grid" data-k="nplc"></div>
+
+  <div class="row" style="margin-top:10px">
+    <button data-k="reset">Reset min/max/avg</button>
+    <button data-k="errors">Read errors</button>
+  </div>
+</div>

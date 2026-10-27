@@ -1,0 +1,67 @@
+<!-- 33522A card body. Elements are found by data-k, never by id. -->
+<style>
+  .awgline{display:flex;align-items:baseline;gap:12px}
+  .awgch{font:600 12px ui-monospace,monospace;color:#7fb8cc;width:34px}
+  .awgbig{font-size:clamp(22px,4.6vw,34px)}
+</style>
+<div class="lcd" style="text-align:left">
+  <div class="awgline"><span class="awgch">CH1</span>
+    <span class="big awgbig"><span data-k="1-f">---</span><span class="u" data-k="1-fu"></span></span></div>
+  <div class="stats" style="justify-content:space-between;margin:2px 0 10px">
+    <span data-k="1-fn">--</span><span><b data-k="1-a">--</b></span>
+    <span>OFFS <b data-k="1-o">--</b></span><span>LOAD <b data-k="1-l">--</b></span></div>
+  <div class="awgline"><span class="awgch">CH2</span>
+    <span class="big awgbig"><span data-k="2-f">---</span><span class="u" data-k="2-fu"></span></span></div>
+  <div class="stats" style="justify-content:space-between;margin-top:2px">
+    <span data-k="2-fn">--</span><span><b data-k="2-a">--</b></span>
+    <span>OFFS <b data-k="2-o">--</b></span><span>LOAD <b data-k="2-l">--</b></span></div>
+</div>
+
+<div class="sec">
+  <h4>Channel to edit</h4>
+  <div class="row">
+    <button data-k="sel-1" class="sel">CH1</button>
+    <button data-k="sel-2">CH2</button>
+  </div>
+
+  <h4>Function</h4>
+  <div class="grid" data-k="funcs"></div>
+
+  <h4>Frequency / amplitude / offset</h4>
+  <div class="row">
+    <input type="number" data-k="in-f" step="any" min="0" value="1000"><label>Hz</label>
+    <button data-k="set-f">Set f</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <input type="number" data-k="in-a" step="any" min="0" value="0.1"><label>Vpp</label>
+    <button data-k="set-a">Set ampl</button>
+    <input type="number" data-k="in-o" step="any" value="0"><label>V</label>
+    <button data-k="set-o">Set offs</button>
+  </div>
+
+  <h4>Load the amplitude is scaled for &mdash; 50&nbsp;&Omega; vs High-Z doubles or halves it</h4>
+  <div class="row">
+    <button data-k="ld-50">50 &Omega;</button>
+    <button data-k="ld-INF">High-Z</button>
+  </div>
+
+  <h4>Output</h4>
+  <div class="row">
+    <button class="go" data-k="out-on">CH1 OUTPUT ON</button>
+    <button class="danger" data-k="out-off">CH1 OUTPUT OFF</button>
+    <button data-k="errors">Read errors</button>
+  </div>
+
+  <h4>Saved states &mdash; locations 1&ndash;4 (both channels)</h4>
+  <div class="grid" data-k="slots"></div>
+  <div class="row" style="margin-top:8px">
+    <input type="text" data-k="name" maxlength="12" placeholder="name (optional)" style="width:150px">
+    <button data-k="save">Save to 1</button>
+    <button class="go" data-k="recall">Recall 1</button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <label>At power-on:</label>
+    <button data-k="ar-1">Restore last settings</button>
+    <button data-k="ar-0">Factory defaults</button>
+  </div>
+</div>

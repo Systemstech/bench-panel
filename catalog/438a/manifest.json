@@ -1,0 +1,474 @@
+{
+  "schema": 1,
+  "id": "438a",
+  "name": "HP 438A dual-channel power meter",
+  "vendor": "Hewlett-Packard",
+  "model": "438A",
+  "version": "1.0.0",
+  "idn_match": [
+    "HP438A"
+  ],
+  "identify": "?ID",
+  "keepalive": "serial-poll",
+  "has_output": true,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "power_meter"
+  ],
+  "tested_on": {},
+  "driver": {
+    "file": "driver.py",
+    "class": "HP438A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "HP438ASim"
+  },
+  "description": "Two-channel thermocouple/diode power meter for the HP 8480-series sensors: readings in W or dBm, A, B, ratio and difference modes, per-channel cal factor, offset, range and filter, REL, ZERO and CAL ADJ against the 1 mW / 50 MHz POWER REF, which is the meter's one output.",
+  "quirks": [
+    {
+      "id": "not-scpi",
+      "note": "Pre-IEEE 488.2 HP-IB program codes. No *IDN? (it answers ?ID, p. 3-40), no *OPC?, no error queue. The manifest's identify and keepalive (a serial poll) tell the core."
+    },
+    {
+      "id": "reading-by-talk",
+      "note": "The reading is sent whenever the meter is addressed to talk in free run (p. 3-34); it is not a query reply. The driver reads it with nothing sent first."
+    },
+    {
+      "id": "error-sentinel",
+      "note": "9.0000E+40 is what the meter sends while its display shows an error (p. 3-35). It becomes reading = null, and the Status Message's error code says why."
+    },
+    {
+      "id": "zero-cal-abort",
+      "note": "ZERO and CAL ADJ take seconds and any command aborts them (p. 3-49). While one runs, the driver only serial-polls for status bit 1 (Cal/Zero Complete, p. 3-45) and refuses every action. ALL OUTPUTS OFF still goes through, and aborts it."
+    },
+    {
+      "id": "never-preset",
+      "note": "PR and a Device Clear are the same (p. 3-70): both cal factors go to 100% and both offsets to 0 dB (p. 3-69), so the next readings are silently off by the sensor's cal factor. Neither is ever sent."
+    },
+    {
+      "id": "no-recall",
+      "note": "RC is not offered: a stored setup includes the POWER REF state (p. 3-84), so recalling one can switch the output on."
+    },
+    {
+      "id": "trigger-hold-is-silent",
+      "note": "In trigger hold (TR0) the meter outputs nothing but its serial-poll byte (p. 3-33), so it cannot even answer ?ID and looks switched off. The driver never leaves free run; if another program left it in hold, cycle its LINE switch (free run is the turn-on default, p. 3-30)."
+    },
+    {
+      "id": "cal-per-channel",
+      "note": "CAL ADJ calibrates one channel with the sensor on it; both channels must be calibrated with their own sensors (p. 3-48). Zero first (p. 3-49)."
+    },
+    {
+      "id": "no-sensor-is-an-error",
+      "note": "A channel with no sensor shows error 31 (A) or 32 (B) (p. 3-58). At power-up that is the documented pass condition, not a fault."
+    },
+    {
+      "id": "ratio-units-unverified",
+      "note": "In ratio and REL modes the bus value is % or dB (p. 3-53). How a linear % is scaled on the bus (100 or 1.00 for equal power) is not stated in the manual and has not been seen on this bench yet."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "manual": {
+    "title": "HP 438A Power Meter Operating and Service Manual",
+    "part": "00438-90028",
+    "edition": "1986-04-01",
+    "pages": "ref = page printed on the page (section 3: printed 3-N = PDF page N + 30). Program codes: Table 3-7, p. 3-47."
+  },
+  "actions": {
+    "measure": {
+      "example": {
+        "value": "A"
+      },
+      "doc": "Measurement mode: one sensor, a ratio or a difference. Changing it clears the filter and drops REL.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B",
+            "A/B",
+            "B/A",
+            "A-B",
+            "B-A"
+          ],
+          "doc": "A, B, A/B, B/A, A-B or B-A"
+        }
+      },
+      "scpi": "AP | BP | AR | BR | AD | BD",
+      "ref": "pp. 3-76, 3-78, 3-80"
+    },
+    "units": {
+      "example": {
+        "value": "dBm"
+      },
+      "doc": "Readings in watts (linear) or dBm (log). Ratio and REL readings become % or dB.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "W",
+            "dBm"
+          ],
+          "doc": "W or dBm"
+        }
+      },
+      "scpi": "LN | LG",
+      "ref": "p. 3-54"
+    },
+    "cal_factor": {
+      "example": {
+        "channel": "A",
+        "value": 100.0
+      },
+      "doc": "The sensor's CAL FACTOR at the measurement frequency, from its label. Selects the channel for entry (SET A / SET B).",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        },
+        "value": {
+          "type": "float",
+          "unit": "%",
+          "min": 1.0,
+          "max": 150.0,
+          "doc": "cal factor, 0.1 % resolution"
+        }
+      },
+      "scpi": "AE|BE KB<value>EN",
+      "ref": "p. 3-51"
+    },
+    "offset": {
+      "example": {
+        "channel": "A",
+        "value": 0.0
+      },
+      "doc": "dB added to the sensor's power: positive for gain ahead of it, negative for loss.",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        },
+        "value": {
+          "type": "float",
+          "unit": "dB",
+          "min": -99.99,
+          "max": 99.99,
+          "doc": "offset, 0.01 dB steps"
+        }
+      },
+      "scpi": "AE|BE OS<value>EN",
+      "ref": "p. 3-66"
+    },
+    "range": {
+      "example": {
+        "channel": "A",
+        "value": "auto"
+      },
+      "doc": "Power range for one channel: auto, hold (keep the current auto range), or manual 1 (most sensitive) to 5.",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        },
+        "value": {
+          "type": "choice",
+          "choices": [
+            "auto",
+            "hold",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "doc": "auto, hold or 1-5"
+        }
+      },
+      "scpi": "AE|BE RA | RH | RM<n>EN",
+      "ref": "p. 3-72"
+    },
+    "filter": {
+      "example": {
+        "channel": "A",
+        "value": "auto"
+      },
+      "doc": "Averaging for one channel: auto, hold, or manual 0-9 (the average of 2^n readings).",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        },
+        "value": {
+          "type": "choice",
+          "choices": [
+            "auto",
+            "hold",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "doc": "auto, hold or 0-9"
+        }
+      },
+      "scpi": "AE|BE FA | FH | FM<n>EN",
+      "ref": "p. 3-62"
+    },
+    "rel": {
+      "example": {
+        "value": false
+      },
+      "doc": "REL on: the next reading becomes the reference and later ones are shown relative to it, in dB or %. The reference cannot be read back.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = enter REL, false = exit"
+        }
+      },
+      "scpi": "RL1 | RL0",
+      "ref": "p. 3-74"
+    },
+    "osc": {
+      "example": {
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "The POWER REF output, 1.00 mW at 50 MHz. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = POWER REF on"
+        }
+      },
+      "scpi": "OC1 | OC0",
+      "ref": "p. 3-47"
+    },
+    "zero": {
+      "example": {
+        "channel": "A"
+      },
+      "confirm": "always",
+      "doc": "Zero one channel. No RF may be on its sensor: any applied power becomes an offset in every later reading. Takes about 10 s; nothing else is sent until it finishes.",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        }
+      },
+      "scpi": "CS AE|BE ZE",
+      "ref": "p. 3-86"
+    },
+    "cal_adj": {
+      "example": {
+        "channel": "A",
+        "ref_cf": 100.0
+      },
+      "confirm": "always",
+      "doc": "CAL ADJ: calibrate one channel's gain to its sensor on the 1 mW POWER REF (the meter switches the reference on itself). ref_cf is the sensor's REFERENCE cal factor at 50 MHz, from its label. Zero the channel first.",
+      "args": {
+        "channel": {
+          "type": "choice",
+          "choices": [
+            "A",
+            "B"
+          ],
+          "doc": "sensor channel"
+        },
+        "ref_cf": {
+          "type": "float",
+          "unit": "%",
+          "min": 50.0,
+          "max": 120.0,
+          "doc": "reference cal factor (the 8481A's is 100.0)"
+        }
+      },
+      "scpi": "CS AE|BE CL<ref_cf>EN",
+      "ref": "pp. 3-48, 3-49"
+    }
+  },
+  "state": {
+    "reading": {
+      "type": "float",
+      "doc": "the reading, in `unit`; null while the meter shows an error (it sends 9.0000E+40)",
+      "nullable": true
+    },
+    "unit": {
+      "type": "str",
+      "doc": "what `reading` is in: W, dBm, % or dB (p. 3-53)",
+      "nullable": true
+    },
+    "meas_error": {
+      "type": "int",
+      "doc": "measurement error code from the Status Message, Table 3-8 (null = none)",
+      "nullable": true
+    },
+    "meas_error_text": {
+      "type": "str",
+      "doc": "what that code means",
+      "nullable": true
+    },
+    "entry_error": {
+      "type": "int",
+      "doc": "entry error code (50-58, 90, 91), null = none",
+      "nullable": true
+    },
+    "entry_error_text": {
+      "type": "str",
+      "doc": "what that code means",
+      "nullable": true
+    },
+    "mode": {
+      "type": "str",
+      "doc": "A, B, A/B, B/A, A-B, B-A, or zeroing / cal while one runs",
+      "nullable": true
+    },
+    "units": {
+      "type": "str",
+      "doc": "W (linear) or dBm (log)",
+      "nullable": true
+    },
+    "entry_channel": {
+      "type": "str",
+      "doc": "the channel settings go to (SET A / SET B)",
+      "nullable": true
+    },
+    "osc": {
+      "type": "bool",
+      "doc": "POWER REF output on",
+      "nullable": true
+    },
+    "rel": {
+      "type": "bool",
+      "doc": "REL mode on",
+      "nullable": true
+    },
+    "trigger": {
+      "type": "str",
+      "doc": "free run (always, from this plugin) or hold",
+      "nullable": true
+    },
+    "sensor_a": {
+      "type": "object",
+      "doc": "channel A settings",
+      "fields": {
+        "range": {
+          "type": "int",
+          "doc": "range 1 (most sensitive) to 5, 10 dB each (p. 3-71); null before the first auto-range",
+          "nullable": true
+        },
+        "range_auto": {
+          "type": "bool",
+          "doc": "true = AUTO RANGE"
+        },
+        "filter": {
+          "type": "int",
+          "doc": "filter number 0-9: the reading averages 2^n samples (p. 3-60)"
+        },
+        "filter_auto": {
+          "type": "bool",
+          "doc": "true = AUTO FILTER"
+        },
+        "cal_factor": {
+          "type": "float",
+          "unit": "%",
+          "doc": "CAL FACTOR in use for this sensor, from the learn string",
+          "nullable": true
+        },
+        "offset": {
+          "type": "float",
+          "unit": "dB",
+          "doc": "OFFSET added to this sensor's power, from the learn string",
+          "nullable": true
+        }
+      }
+    },
+    "sensor_b": {
+      "type": "object",
+      "doc": "channel B settings",
+      "fields": {
+        "range": {
+          "type": "int",
+          "doc": "range 1 (most sensitive) to 5, 10 dB each (p. 3-71); null before the first auto-range",
+          "nullable": true
+        },
+        "range_auto": {
+          "type": "bool",
+          "doc": "true = AUTO RANGE"
+        },
+        "filter": {
+          "type": "int",
+          "doc": "filter number 0-9: the reading averages 2^n samples (p. 3-60)"
+        },
+        "filter_auto": {
+          "type": "bool",
+          "doc": "true = AUTO FILTER"
+        },
+        "cal_factor": {
+          "type": "float",
+          "unit": "%",
+          "doc": "CAL FACTOR in use for this sensor, from the learn string",
+          "nullable": true
+        },
+        "offset": {
+          "type": "float",
+          "unit": "dB",
+          "doc": "OFFSET added to this sensor's power, from the learn string",
+          "nullable": true
+        }
+      }
+    },
+    "busy": {
+      "type": "str",
+      "doc": "the ZERO or CAL ADJ running now, with seconds so far; null when idle",
+      "nullable": true
+    },
+    "last_op": {
+      "type": "str",
+      "doc": "how the last ZERO or CAL ADJ ended",
+      "nullable": true
+    },
+    "status_raw": {
+      "type": "str",
+      "doc": "the 23-character Status Message as received (Figure 3-6, p. 3-40)",
+      "nullable": true
+    }
+  }
+}

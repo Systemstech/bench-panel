@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "id": "34401a",
+  "name": "HP/Agilent 34401A 6.5-digit multimeter",
+  "vendor": "HP / Agilent / Keysight",
+  "model": "34401A",
+  "version": "1.2.1",
+  "idn_match": [
+    "34401A"
+  ],
+  "has_output": false,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "multimeter"
+  ],
+  "tested_on": {
+    "gpib-gateway": "2026-09-22, ICS 8065"
+  },
+  "driver": {
+    "file": "driver.py",
+    "class": "Dmm34401A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "Hp34401ASim"
+  },
+  "description": "Function, range, NPLC and running min/max/avg. No outputs.",
+  "quirks": [
+    {
+      "id": "local-refuses-read",
+      "note": "In LOCAL the meter answers *IDN? and CONF? but refuses READ? with +550 -- it looks like a dead measurement. REN must be asserted; the core does it on every connect."
+    },
+    {
+      "id": "syst-loc-rs232-only",
+      "note": "SYST:LOC is RS-232 only (+514 over GPIB)."
+    },
+    {
+      "id": "nplc-is-accuracy",
+      "note": "NPLC is integration time: an accuracy control with a speed side-effect, not a fast/slow switch."
+    },
+    {
+      "id": "no-saved-setups",
+      "note": "No battery and no *SAV/*RCL. Powers up in DC volts, autorange; only interface/language settings persist."
+    },
+    {
+      "id": "overload-sentinel",
+      "note": "9.9E37 is the overload value, not a reading."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "actions": {
+    "function": {
+      "example": {
+        "value": "DCV"
+      },
+      "doc": "Choose the measurement function. Resets the statistics and returns the range to AUTO.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "DCV",
+            "ACV",
+            "DCI",
+            "ACI",
+            "2W OHM",
+            "4W OHM",
+            "FREQ",
+            "PERIOD",
+            "DIODE",
+            "CONT"
+          ],
+          "doc": ""
+        }
+      },
+      "scpi": "CONF:VOLT:DC | CONF:VOLT:AC | CONF:CURR:DC | CONF:CURR:AC | CONF:RES | CONF:FRES | CONF:FREQ | CONF:PER | CONF:DIOD | CONF:CONT; TRIG:SOUR IMM",
+      "ref": "CONFigure pp. 119-120; TRIGger:SOURce p. 130"
+    },
+    "range": {
+      "example": {
+        "value": "AUTO"
+      },
+      "doc": "Set the range of the present function, or AUTO. Not for FREQ/PERIOD/DIODE/CONT.",
+      "args": {
+        "value": {
+          "type": "str",
+          "doc": "\"AUTO\" or a number in the function's units, e.g. \"10\" for the 10 V range"
+        }
+      },
+      "scpi": "<fn>:RANG:AUTO ON | <fn>:RANG <value>",
+      "ref": "p. 121"
+    },
+    "nplc": {
+      "example": {
+        "value": 10
+      },
+      "doc": "Integration time in power-line cycles: an ACCURACY control (10 = best noise rejection, slowest).",
+      "args": {
+        "value": {
+          "type": "float",
+          "choices": [
+            0.02,
+            0.2,
+            1,
+            10,
+            100
+          ],
+          "doc": "power-line cycles"
+        }
+      },
+      "scpi": "<fn>:NPLC <value>",
+      "ref": "p. 122"
+    },
+    "reset_stats": {
+      "doc": "Zero min/max/avg/samples. Use before averaging fresh readings.",
+      "args": {}
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 133"
+    }
+  },
+  "manual": {
+    "title": "HP 34401A Multimeter User's Guide",
+    "part": "34401-90004",
+    "edition": "February 1996",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "state": {
+    "reading": {
+      "type": "float",
+      "doc": "the latest reading, in `unit`",
+      "nullable": true
+    },
+    "unit": {
+      "type": "str",
+      "doc": "VDC, VAC, ADC, AAC, OHM, Hz, s or V"
+    },
+    "function": {
+      "type": "str",
+      "doc": "the function name as in the function action"
+    },
+    "range": {
+      "type": "str",
+      "doc": "\"AUTO\", the range, or \"n/a\""
+    },
+    "nplc": {
+      "type": "float",
+      "doc": "integration time, power-line cycles",
+      "nullable": true
+    },
+    "min": {
+      "type": "float",
+      "doc": "smallest reading since reset_stats",
+      "nullable": true
+    },
+    "max": {
+      "type": "float",
+      "doc": "largest reading since reset_stats",
+      "nullable": true
+    },
+    "avg": {
+      "type": "float",
+      "doc": "mean of the readings since reset_stats",
+      "nullable": true
+    },
+    "samples": {
+      "type": "int",
+      "doc": "readings since reset_stats (wait_for this to average n fresh ones)"
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last clear_errors",
+      "nullable": true
+    },
+    "functions": {
+      "type": "list",
+      "doc": "the function names this card offers"
+    },
+    "nplc_choices": {
+      "type": "list",
+      "doc": "the NPLC values offered"
+    }
+  }
+}

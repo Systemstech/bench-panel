@@ -1,0 +1,360 @@
+{
+  "schema": 1,
+  "id": "53181a",
+  "name": "HP/Agilent 53181A 225 MHz frequency counter",
+  "vendor": "HP / Agilent / Keysight",
+  "model": "53181A",
+  "version": "1.2.1",
+  "idn_match": [
+    "53181A"
+  ],
+  "has_output": false,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "frequency_counter"
+  ],
+  "tested_on": {
+    "gpib-gateway": "2026-09-23, ICS 8065: 8648A into Ch2 at 100/500/1000 MHz and Ch1 at 10 MHz (gates 0.1/1/10 s), no-signal abort and recovery, RUN mode restored"
+  },
+  "driver": {
+    "file": "driver.py",
+    "class": "Hp53181A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "Hp53181ASim"
+  },
+  "description": "Frequency and period on channel 1 or 2, frequency ratio, gate time, channel 1 input setup, reference source, running min/max/avg, saved setups 1-20. Never blocks on a missing signal.",
+  "quirks": [
+    {
+      "id": "no-signal-hang",
+      "note": "READ?, MEASure? and FETCh? during a measurement wait for a signal that may never come, and can hold off the bus until a device clear. The driver starts a measurement with INIT + *OPC and fetches only after *ESR? reports it complete; with no signal it sends ABORt and shows NO SIGNAL."
+    },
+    {
+      "id": "no-channel-3",
+      "note": "Channel 2 is Option 030. There is no channel 3: FREQ 3 is error -224."
+    },
+    {
+      "id": "func-query-form",
+      "note": "FUNC? answers \"FREQ\" for channel 1 with no suffix and \"FREQ 2\" for channel 2."
+    },
+    {
+      "id": "ch2-fixed",
+      "note": "Channel 2's impedance and coupling are query-only (50 ohm, AC)."
+    },
+    {
+      "id": "run-mode-restored",
+      "note": "The panel works in single-measurement mode while ON, and puts RUN mode back at power-off if that is how it found the counter."
+    },
+    {
+      "id": "not-the-53131-guide",
+      "note": "The 53131A/132A programming guide is a different counter. Use 53181-90002."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "actions": {
+    "set_func": {
+      "example": {
+        "value": "FREQ 1"
+      },
+      "doc": "What to measure, and on which channel. Stops the measurement in flight and starts clean.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "FREQ 1",
+            "FREQ 2",
+            "PER 1",
+            "PER 2",
+            "RAT 1,2",
+            "RAT 2,1"
+          ],
+          "doc": ""
+        }
+      },
+      "scpi": ":ABOR; :FUNC \"<value>\"",
+      "ref": ":ABORt p. 4-4; :FUNCtion p. 4-77"
+    },
+    "set_gate": {
+      "example": {
+        "value": 0.1
+      },
+      "doc": "Gate time. Longer = more digits, slower readings.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0.001 .. 1000",
+          "unit": "s",
+          "min": 0.001,
+          "max": 1000
+        }
+      },
+      "scpi": ":FREQ:ARM:STAR:SOUR IMM; :FREQ:ARM:STOP:SOUR TIM; :FREQ:ARM:STOP:TIM <value>",
+      "ref": "p. 4-75"
+    },
+    "set_imp": {
+      "example": {
+        "value": "1E6"
+      },
+      "doc": "Channel 1 input impedance.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "50",
+            "1E6"
+          ],
+          "doc": "ohms"
+        }
+      },
+      "scpi": ":INP:IMP <value>",
+      "ref": "p. 4-49"
+    },
+    "set_coup": {
+      "example": {
+        "value": "AC"
+      },
+      "doc": "Channel 1 coupling.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "AC",
+            "DC"
+          ],
+          "doc": ""
+        }
+      },
+      "scpi": ":INP:COUP <value>",
+      "ref": "p. 4-48"
+    },
+    "set_att": {
+      "example": {
+        "value": "1"
+      },
+      "doc": "Channel 1 attenuator.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "1",
+            "10"
+          ],
+          "doc": "x1 or x10"
+        }
+      },
+      "scpi": ":INP:ATT <value>",
+      "ref": "p. 4-48"
+    },
+    "set_filter": {
+      "example": {
+        "value": false
+      },
+      "doc": "Channel 1 100 kHz low-pass filter.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = filter in"
+        }
+      },
+      "scpi": ":INP:FILT ON | OFF",
+      "ref": "p. 4-48"
+    },
+    "reset_stats": {
+      "doc": "Zero min/max/avg/samples.",
+      "args": {}
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": ":SYST:ERR? (repeated)",
+      "ref": "p. 4-92"
+    },
+    "save_state": {
+      "example": {
+        "slot": 1
+      },
+      "doc": "Save to register 1-20.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-20",
+          "min": 1,
+          "max": 20
+        }
+      },
+      "scpi": ":ABOR; *SAV <slot>",
+      "ref": "stop first p. 2-7; *SAV p. 4-117"
+    },
+    "recall_state": {
+      "example": {
+        "slot": 1
+      },
+      "doc": "Recall register 1-20, then back to single-measurement mode.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-20",
+          "min": 1,
+          "max": 20
+        }
+      },
+      "scpi": ":ABOR; *RCL <slot>; :INIT:CONT OFF",
+      "ref": "stop first p. 2-7; *RCL p. 4-114; :INITiate:CONTinuous p. 4-44"
+    }
+  },
+  "manual": {
+    "title": "HP 53181A Frequency Counter Programming Guide",
+    "part": "53181-90002",
+    "edition": "serial prefix 3711 and above",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "state": {
+    "function": {
+      "type": "str",
+      "doc": "FREQ 1, FREQ 2, PER 1, PER 2, RAT 1,2 or RAT 2,1",
+      "nullable": true
+    },
+    "unit": {
+      "type": "str",
+      "doc": "Hz, s or ratio",
+      "nullable": true
+    },
+    "reading": {
+      "type": "float",
+      "doc": "the latest valid result in `unit`; null while measuring or with no signal",
+      "nullable": true
+    },
+    "raw": {
+      "type": "str",
+      "doc": "the counter's own reply text (its digits)",
+      "nullable": true
+    },
+    "shown": {
+      "type": "float",
+      "doc": "reading scaled for display, in shown_unit",
+      "nullable": true
+    },
+    "shown_unit": {
+      "type": "str",
+      "doc": "GHz, MHz, kHz, Hz, s, ms ...",
+      "nullable": true
+    },
+    "status": {
+      "type": "str",
+      "doc": "\"measuring\", \"ok\", \"no signal\" or \"no result\"",
+      "nullable": true
+    },
+    "reading_age_s": {
+      "type": "float",
+      "doc": "seconds since the last valid reading",
+      "nullable": true,
+      "unit": "s"
+    },
+    "gate_s": {
+      "type": "float",
+      "doc": "gate time",
+      "nullable": true,
+      "unit": "s"
+    },
+    "ch1": {
+      "type": "object",
+      "doc": "channel 1 input",
+      "fields": {
+        "imp": {
+          "type": "float",
+          "doc": "impedance",
+          "nullable": true,
+          "unit": "Ω"
+        },
+        "coup": {
+          "type": "str",
+          "doc": "AC or DC",
+          "nullable": true
+        },
+        "att": {
+          "type": "float",
+          "doc": "1 or 10",
+          "nullable": true
+        },
+        "filter": {
+          "type": "bool",
+          "doc": "100 kHz low-pass in",
+          "nullable": true
+        }
+      }
+    },
+    "ch2": {
+      "type": "object",
+      "doc": "channel 2 input (fixed)",
+      "fields": {
+        "imp": {
+          "type": "float",
+          "doc": "impedance",
+          "nullable": true,
+          "unit": "Ω"
+        },
+        "coup": {
+          "type": "str",
+          "doc": "coupling",
+          "nullable": true
+        }
+      }
+    },
+    "ref": {
+      "type": "str",
+      "doc": "timebase source, e.g. INT or EXT",
+      "nullable": true
+    },
+    "ref_auto": {
+      "type": "bool",
+      "doc": "timebase source auto-selects",
+      "nullable": true
+    },
+    "min": {
+      "type": "float",
+      "doc": "smallest reading since reset_stats",
+      "nullable": true
+    },
+    "max": {
+      "type": "float",
+      "doc": "largest reading since reset_stats",
+      "nullable": true
+    },
+    "avg": {
+      "type": "float",
+      "doc": "mean since reset_stats",
+      "nullable": true
+    },
+    "samples": {
+      "type": "int",
+      "doc": "valid readings since reset_stats"
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last drain",
+      "nullable": true
+    },
+    "functions": {
+      "type": "list",
+      "doc": "the function names offered"
+    },
+    "slots": {
+      "type": "list",
+      "doc": "the save/recall registers"
+    },
+    "digits": {
+      "type": "int",
+      "doc": "significant digits in the last reading",
+      "nullable": true
+    }
+  }
+}

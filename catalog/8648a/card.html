@@ -1,0 +1,36 @@
+<!-- 8648A card body. Elements are found by data-k, never by id. -->
+<div class="lcd">
+  <!-- The big number is the ABSOLUTE level at the connector. When reference mode
+       is on that is NOT what the instrument holds; the delta is shown underneath. -->
+  <div class="big"><span data-k="ampl">---.--</span><span class="u">dBm</span></div>
+  <div class="big" style="font-size:clamp(20px,4.4vw,32px);margin-top:4px">
+    <span data-k="freq">---.------</span><span class="u">MHz</span></div>
+  <div class="stats"><span>ENTERED <b data-k="entered">--</b></span>
+    <span>REF <b data-k="refval">--</b></span>
+    <span>MOD <b data-k="mod">--</b></span></div>
+</div>
+
+<div class="banner" data-k="banner" style="display:none"></div>
+
+<div class="sec">
+  <h4>Frequency</h4>
+  <div class="row">
+    <input type="number" data-k="in-f" step="0.000001" min="0.1" max="1000" value="915">
+    <label>MHz</label>
+    <button data-k="set-f">Set f</button>
+  </div>
+
+  <h4>Level &mdash; absolute at the connector</h4>
+  <div class="row">
+    <input type="number" data-k="in-a" step="0.1" min="-136" max="13" value="-55">
+    <label>dBm</label>
+    <button data-k="set-a">Set level</button>
+  </div>
+
+  <h4>RF output</h4>
+  <div class="row">
+    <button class="go" data-k="rf-on">RF ON</button>
+    <button class="danger" data-k="rf-off">RF OFF</button>
+    <button data-k="errors">Read errors</button>
+  </div>
+</div>

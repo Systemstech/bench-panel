@@ -1,0 +1,28 @@
+[Unit]
+Description=Bench Panel - plug-in instrument dashboard (instruments come from site.json)
+Documentation=file://@HOME@/bench_panel/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@HOME@/bench_panel
+# Loopback ONLY. The single route in is the authenticated HTTPS proxy in
+# bench_panel.conf -- binding this to 0.0.0.0 would hand anyone on the LAN a
+# button that switches on a power supply.
+# --no-browser: a service has no desktop to open one on. The bench itself (which
+# instruments, which addresses) is ~/bench_panel/site.json and the installed
+# plugins are ~/bench_panel/plugins/ -- deploy.sh never overwrites either.
+ExecStart=/usr/bin/python3 -u @HOME@/bench_panel/bench_panel.py --host 127.0.0.1 --port 8765 --no-browser
+# SIGTERM runs the safe shutdown: outputs off, then device_local, on every
+# instrument that is ON in the panel. Give it room -- it talks to real hardware
+# before exiting, and a KILL here leaves the bench in REMOTE with outputs live.
+KillSignal=SIGTERM
+TimeoutStopSec=45
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

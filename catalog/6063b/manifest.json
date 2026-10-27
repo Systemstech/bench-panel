@@ -1,0 +1,415 @@
+{
+  "schema": 1,
+  "id": "6063b",
+  "name": "HP/Agilent 6063B DC electronic load",
+  "vendor": "HP / Agilent",
+  "model": "6063B",
+  "version": "1.0.0",
+  "idn_match": [
+    "6063B"
+  ],
+  "has_output": true,
+  "connections": [
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "electronic_load"
+  ],
+  "tested_on": {},
+  "driver": {
+    "file": "driver.py",
+    "class": "HP6063B"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "HP6063BSim"
+  },
+  "description": "240 V / 10 A / 250 W single-input DC load: CC, CR and CV, input on with two-click arm, programmable current protection, protection status decoded, volatile saved states 1-6.",
+  "quirks": [
+    {
+      "id": "input-is-the-output",
+      "note": "The INPUT is what the panel treats as an output: on, it sinks current. INP ON needs confirmation; ALL OUTPUTS OFF sends INP OFF."
+    },
+    {
+      "id": "never-rst",
+      "note": "No *RST: the Operating Manual's Table 4-6 lists the factory input state as ON, the Programming Manual p. 51 says 0. The panel never sends it."
+    },
+    {
+      "id": "never-sav-0",
+      "note": "Register 0 is the power-on state, and losing power during Save 0 corrupts non-volatile memory and forces a recalibration (Operating Manual p. 63). Only slots 1-6, which are lost at power-off."
+    },
+    {
+      "id": "no-short",
+      "note": "INP:SHOR (full-scale current / minimum resistance) is not offered."
+    },
+    {
+      "id": "ps-does-not-clear-inp",
+      "note": "A protection shutdown leaves INP? = 1 (Prog p. 45). The card reads the status register to show it."
+    },
+    {
+      "id": "clear-reenables",
+      "note": "INP:PROT:CLE switches the input back ON if it was on at the trip (Prog p. 50): protection_clear needs confirmation."
+    },
+    {
+      "id": "mode-range-while-off",
+      "note": "Mode and range changes are refused while the input is on: either can step the current (Prog pp. 46, 52)."
+    },
+    {
+      "id": "sense-switch",
+      "note": "Rear LCL/RMT sense switch on RMT with no sense leads: voltage readback reads 0 in every mode and the input goes off in CV/CR (Operating Manual p. 43). v_sense_suspect flags it."
+    },
+    {
+      "id": "coarse-readback",
+      "note": "Readback is +/-0.1% +/-150 mV (67 mV steps) and +/-0.12% +/-10 mA (27 mA steps). Use a meter for anything finer."
+    },
+    {
+      "id": "manual-names-6060a",
+      "note": "The Programming Manual (06060-90005) is the family guide; it uses the 6060A in examples and says they apply to any electronic load. It does not name the 6063B."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "manual": {
+    "title": "Agilent Electronic Load Family Programming Manual",
+    "part": "06060-90005",
+    "edition": "Edition 3, September 1991, update April 2000",
+    "pages": "ref = page printed on the page (equal to the PDF page). Ranges from the 6060B/6063B Operating Manual 5951-2826, Table 5-1."
+  },
+  "actions": {
+    "input": {
+      "example": {
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "Switch the load input on (sinking) or off. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = ON (sinking), false = OFF"
+        }
+      },
+      "scpi": "INP ON | INP OFF",
+      "ref": "p. 51"
+    },
+    "set_mode": {
+      "example": {
+        "value": "CC"
+      },
+      "doc": "Select constant current, resistance or voltage. Refused while the input is ON.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "CC",
+            "CR",
+            "CV"
+          ],
+          "doc": "CC, CR or CV"
+        }
+      },
+      "scpi": "MODE:CURR | MODE:RES | MODE:VOLT",
+      "ref": "p. 52"
+    },
+    "set_i_range": {
+      "example": {
+        "value": "LOW"
+      },
+      "doc": "Current range. Refused while the input is ON. Going down moves a higher level to the new range's maximum.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "LOW",
+            "HIGH"
+          ],
+          "doc": "LOW = 0-1 A, HIGH = 0-10 A"
+        }
+      },
+      "scpi": "CURR:RANG 1 | 10",
+      "ref": "p. 46"
+    },
+    "set_r_range": {
+      "example": {
+        "value": "MID"
+      },
+      "doc": "Resistance range. Refused while the input is ON.",
+      "args": {
+        "value": {
+          "type": "choice",
+          "choices": [
+            "LOW",
+            "MID",
+            "HIGH"
+          ],
+          "doc": "LOW = 0-24 ohm, MID = 24 ohm-24 kohm, HIGH = 240 ohm-240 kohm"
+        }
+      },
+      "scpi": "RES:RANG 24 | 24000 | 240000",
+      "ref": "p. 57"
+    },
+    "set_i": {
+      "example": {
+        "value": 0.1
+      },
+      "doc": "CC level. Refused outside the present current range. Takes effect when CC is the mode and the input is on.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. 1 A (LOW) or 10 A (HIGH)",
+          "unit": "A",
+          "min": 0,
+          "max": 10
+        }
+      },
+      "scpi": "CURR <value>",
+      "ref": "p. 44"
+    },
+    "set_r": {
+      "example": {
+        "value": 1000.0
+      },
+      "doc": "CR level. Refused outside the present resistance range.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "within the present range",
+          "unit": "ohm",
+          "min": 0,
+          "max": 240000
+        }
+      },
+      "scpi": "RES <value>",
+      "ref": "p. 55"
+    },
+    "set_v": {
+      "example": {
+        "value": 5.0
+      },
+      "doc": "CV level: the load draws whatever current holds this voltage (up to its rating).",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. 240 V",
+          "unit": "V",
+          "min": 0,
+          "max": 240
+        }
+      },
+      "scpi": "VOLT <value>",
+      "ref": "p. 76"
+    },
+    "set_ocp": {
+      "example": {
+        "value": 2.0
+      },
+      "doc": "Software current protection level: above it for the delay, the input shuts down (PS).",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. 10.2 A",
+          "unit": "A",
+          "min": 0,
+          "max": 10.2
+        }
+      },
+      "scpi": "CURR:PROT <value>",
+      "ref": "p. 45"
+    },
+    "set_ocp_delay": {
+      "example": {
+        "value": 1.0
+      },
+      "doc": "How long the current may exceed the protection level before shutdown.",
+      "args": {
+        "value": {
+          "type": "float",
+          "doc": "0 .. 60 s",
+          "unit": "s",
+          "min": 0,
+          "max": 60
+        }
+      },
+      "scpi": "CURR:PROT:DEL <value>",
+      "ref": "p. 45"
+    },
+    "ocp_state": {
+      "example": {
+        "value": true
+      },
+      "doc": "Enable or disable software current protection (off at factory default).",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": "true = enabled"
+        }
+      },
+      "scpi": "CURR:PROT:STAT ON | OFF",
+      "ref": "p. 45"
+    },
+    "protection_clear": {
+      "confirm": "always",
+      "doc": "Clear latched protection. ALWAYS needs confirmed=True: it switches the input back ON if it was on when protection tripped.",
+      "args": {},
+      "scpi": "INP:PROT:CLE",
+      "ref": "p. 50"
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 66"
+    },
+    "save_state": {
+      "example": {
+        "slot": 1
+      },
+      "doc": "Save to volatile slot 1-6 (lost at power-off). Refused while the input is ON. Slot 0 is never written.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-6",
+          "min": 1,
+          "max": 6
+        }
+      },
+      "scpi": "*SAV <slot>",
+      "ref": "p. 37"
+    },
+    "recall_state": {
+      "example": {
+        "slot": 1
+      },
+      "confirm": "always",
+      "doc": "Recall slot 1-6. ALWAYS needs confirmed=True: a saved state can switch the input ON.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-6",
+          "min": 1,
+          "max": 6
+        }
+      },
+      "scpi": "*RCL <slot>",
+      "ref": "p. 36"
+    }
+  },
+  "state": {
+    "v_meas": {
+      "type": "float",
+      "doc": "input voltage (+/-0.1% +/-150 mV); null when over range",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_meas": {
+      "type": "float",
+      "doc": "input current (+/-0.12% +/-10 mA); null when over range",
+      "nullable": true,
+      "unit": "A"
+    },
+    "p_meas": {
+      "type": "float",
+      "doc": "computed input power; null when over range",
+      "nullable": true,
+      "unit": "W"
+    },
+    "overload": {
+      "type": "bool",
+      "doc": "a reading came back 9.9E+37 (over the measurement range)",
+      "nullable": true
+    },
+    "input": {
+      "type": "bool",
+      "doc": "INP? -- note it stays true through a protection shutdown; see shutdown",
+      "nullable": true
+    },
+    "mode": {
+      "type": "str",
+      "doc": "\"CC\", \"CR\" or \"CV\"",
+      "nullable": true
+    },
+    "i_set": {
+      "type": "float",
+      "doc": "CC level",
+      "nullable": true,
+      "unit": "A"
+    },
+    "r_set": {
+      "type": "float",
+      "doc": "CR level",
+      "nullable": true,
+      "unit": "ohm"
+    },
+    "v_set": {
+      "type": "float",
+      "doc": "CV level",
+      "nullable": true,
+      "unit": "V"
+    },
+    "i_range": {
+      "type": "str",
+      "doc": "LOW (1 A) or HIGH (10 A)",
+      "nullable": true
+    },
+    "r_range": {
+      "type": "str",
+      "doc": "LOW, MID or HIGH",
+      "nullable": true
+    },
+    "ocp": {
+      "type": "float",
+      "doc": "software current protection level",
+      "nullable": true,
+      "unit": "A"
+    },
+    "ocp_delay": {
+      "type": "float",
+      "doc": "software current protection delay",
+      "nullable": true,
+      "unit": "s"
+    },
+    "ocp_state": {
+      "type": "bool",
+      "doc": "software current protection enabled",
+      "nullable": true
+    },
+    "status": {
+      "type": "int",
+      "doc": "raw STAT:QUES:COND? value (bits: Prog pp. 85-86)",
+      "nullable": true
+    },
+    "faults": {
+      "type": "list",
+      "doc": "active fault bits by name: VF OC OP OT RV OV",
+      "nullable": true
+    },
+    "shutdown": {
+      "type": "bool",
+      "doc": "PS: protection has turned the input off; clears with protection_clear",
+      "nullable": true
+    },
+    "unregulated": {
+      "type": "bool",
+      "doc": "UNR: the load cannot hold its setting (e.g. the source cannot supply the CC level)",
+      "nullable": true
+    },
+    "v_sense_suspect": {
+      "type": "bool",
+      "doc": "sinking > 0.1 A while reading < 0.1 V: check the rear LCL/RMT sense switch",
+      "nullable": true
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last clear_errors / drain",
+      "nullable": true
+    }
+  }
+}

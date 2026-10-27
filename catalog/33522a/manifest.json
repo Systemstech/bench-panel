@@ -1,0 +1,383 @@
+{
+  "schema": 1,
+  "id": "33522a",
+  "name": "Agilent 33522A 30 MHz function/arbitrary generator",
+  "vendor": "Agilent / Keysight",
+  "model": "33522A",
+  "version": "1.2.1",
+  "idn_match": [
+    "33522A"
+  ],
+  "has_output": true,
+  "connections": [
+    "vxi11",
+    "gpib-gateway",
+    "visa"
+  ],
+  "capabilities": [
+    "function_generator"
+  ],
+  "tested_on": {
+    "vxi11": "2026-09-22, direct LAN"
+  },
+  "driver": {
+    "file": "driver.py",
+    "class": "Ag33522A"
+  },
+  "card": {
+    "html": "card.html",
+    "js": "card.js"
+  },
+  "sim": {
+    "file": "sim.py",
+    "class": "Ag33522ASim"
+  },
+  "description": "Two channels: function, frequency, amplitude, offset, load, outputs with two-click arm, saved states 1-4, power-on behaviour.",
+  "quirks": [
+    {
+      "id": "load-scales-display",
+      "note": "OUTP:LOAD does not change the hardware; it changes the amplitude the generator DISPLAYS. 50 ohm vs High-Z doubles or halves it."
+    },
+    {
+      "id": "state-0-reserved",
+      "note": "Location 0 is the power-down state; the panel only uses 1-4."
+    },
+    {
+      "id": "state-excludes-output",
+      "note": "A saved state does not include output on/off, but recall can jump the amplitude on a live output."
+    },
+    {
+      "id": "power-on-default",
+      "note": "MEM:STAT:REC:AUTO OFF (factory) = reset at every power-on; ON restores the last state. Outputs are always off at power-on."
+    }
+  ],
+  "author": "Systemstech",
+  "license": "MIT",
+  "actions": {
+    "set_func": {
+      "example": {
+        "ch": 1,
+        "value": "SIN"
+      },
+      "doc": "Waveform of a channel.",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "choice",
+          "choices": [
+            "SIN",
+            "SQU",
+            "RAMP",
+            "PULS",
+            "NOIS",
+            "DC"
+          ],
+          "doc": ""
+        }
+      },
+      "scpi": "SOUR<ch>:FUNC <value>",
+      "ref": "p. 216"
+    },
+    "set_freq": {
+      "example": {
+        "ch": 1,
+        "value": 1000
+      },
+      "doc": "Frequency of a channel. The generator refuses out-of-range values itself (error queued -> ok false).",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "float",
+          "doc": "",
+          "unit": "Hz"
+        }
+      },
+      "scpi": "SOUR<ch>:FREQ <value>",
+      "ref": "p. 205"
+    },
+    "set_ampl": {
+      "example": {
+        "ch": 1,
+        "value": 0.1
+      },
+      "doc": "Amplitude, in the channel's present UNIT (see state chN.unit) and assuming its LOAD setting.",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "float",
+          "doc": "in chN.unit"
+        }
+      },
+      "scpi": "SOUR<ch>:VOLT <value>",
+      "ref": "p. 326"
+    },
+    "set_offset": {
+      "example": {
+        "ch": 1,
+        "value": 0
+      },
+      "doc": "DC offset of a channel.",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "float",
+          "doc": "",
+          "unit": "V"
+        }
+      },
+      "scpi": "SOUR<ch>:VOLT:OFFS <value>",
+      "ref": "p. 330"
+    },
+    "set_load": {
+      "example": {
+        "ch": 1,
+        "value": "50"
+      },
+      "doc": "The load the generator assumes when it shows amplitude. 50 vs INF doubles/halves the displayed figure.",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "choice",
+          "choices": [
+            "50",
+            "INF"
+          ],
+          "doc": ""
+        }
+      },
+      "scpi": "OUTP<ch>:LOAD 50 | INF",
+      "ref": "p. 264"
+    },
+    "output": {
+      "example": {
+        "ch": 1,
+        "value": true
+      },
+      "confirm": {
+        "when": {
+          "value": true
+        }
+      },
+      "doc": "Channel output on/off. ON needs confirmed=True, and a script run must be allowed outputs.",
+      "args": {
+        "ch": {
+          "type": "choice",
+          "choices": [
+            1,
+            2
+          ],
+          "doc": "channel"
+        },
+        "value": {
+          "type": "bool",
+          "doc": "true = ON"
+        }
+      },
+      "scpi": "OUTP<ch> ON | OFF",
+      "ref": "p. 264"
+    },
+    "save_state": {
+      "example": {
+        "slot": 1,
+        "name": ""
+      },
+      "doc": "Save to location 1-4 (0 is the power-down state, never written). Overwriting needs confirmed=True.",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-4",
+          "min": 1,
+          "max": 4
+        },
+        "name": {
+          "type": "str",
+          "doc": "optional, up to 12, letter first"
+        }
+      },
+      "scpi": "MEM:STAT:VAL? <slot>; *SAV <slot>; MEM:STAT:NAME <slot>,<name>",
+      "ref": "MEMory:STATe:VALid? p. 253; *SAV p. 237; MEMory:STATe:NAME p. 252"
+    },
+    "recall_state": {
+      "example": {
+        "slot": 1
+      },
+      "confirm": "always",
+      "doc": "Recall location 1-4. ALWAYS needs confirmed=True (it can jump the amplitude on a live output).",
+      "args": {
+        "slot": {
+          "type": "int",
+          "doc": "1-4",
+          "min": 1,
+          "max": 4
+        }
+      },
+      "scpi": "*RCL <slot>",
+      "ref": "MEMory:STATe:VALid? p. 253; *RCL p. 237"
+    },
+    "auto_recall": {
+      "example": {
+        "value": true
+      },
+      "doc": "Power-on behaviour: true restores the power-down state, false = factory reset.",
+      "args": {
+        "value": {
+          "type": "bool",
+          "doc": ""
+        }
+      },
+      "scpi": "MEM:STAT:REC:AUTO ON | OFF",
+      "ref": "p. 252"
+    },
+    "clear_errors": {
+      "doc": "Read and empty the error queue. Reply: errors = the list read.",
+      "args": {},
+      "scpi": "SYST:ERR? (repeated)",
+      "ref": "p. 307"
+    }
+  },
+  "manual": {
+    "title": "Agilent 33500 Series Operating and Service Guide",
+    "pages": "ref = the page number printed on the page, not the PDF viewer's page"
+  },
+  "state": {
+    "ch1": {
+      "type": "object",
+      "doc": "channel 1",
+      "fields": {
+        "func": {
+          "type": "str",
+          "doc": "SIN, SQU, RAMP, PULS, NOIS, DC ...",
+          "nullable": true
+        },
+        "freq_hz": {
+          "type": "float",
+          "doc": "frequency",
+          "nullable": true,
+          "unit": "Hz"
+        },
+        "ampl": {
+          "type": "float",
+          "doc": "amplitude, in `unit`",
+          "nullable": true
+        },
+        "unit": {
+          "type": "str",
+          "doc": "VPP, VRMS or DBM -- the generator's own amplitude unit",
+          "nullable": true
+        },
+        "offset": {
+          "type": "float",
+          "doc": "DC offset",
+          "nullable": true,
+          "unit": "V"
+        },
+        "output": {
+          "type": "bool",
+          "doc": "channel output ON",
+          "nullable": true
+        },
+        "load": {
+          "type": "str",
+          "doc": "the load the generator ASSUMES: \"50 Ω\" or \"HighZ\" (changes the displayed amplitude, not the hardware)",
+          "nullable": true
+        }
+      }
+    },
+    "ch2": {
+      "type": "object",
+      "doc": "channel 2",
+      "fields": {
+        "func": {
+          "type": "str",
+          "doc": "SIN, SQU, RAMP, PULS, NOIS, DC ...",
+          "nullable": true
+        },
+        "freq_hz": {
+          "type": "float",
+          "doc": "frequency",
+          "nullable": true,
+          "unit": "Hz"
+        },
+        "ampl": {
+          "type": "float",
+          "doc": "amplitude, in `unit`",
+          "nullable": true
+        },
+        "unit": {
+          "type": "str",
+          "doc": "VPP, VRMS or DBM -- the generator's own amplitude unit",
+          "nullable": true
+        },
+        "offset": {
+          "type": "float",
+          "doc": "DC offset",
+          "nullable": true,
+          "unit": "V"
+        },
+        "output": {
+          "type": "bool",
+          "doc": "channel output ON",
+          "nullable": true
+        },
+        "load": {
+          "type": "str",
+          "doc": "the load the generator ASSUMES: \"50 Ω\" or \"HighZ\" (changes the displayed amplitude, not the hardware)",
+          "nullable": true
+        }
+      }
+    },
+    "slots": {
+      "type": "list",
+      "doc": "[{name, valid}] for locations 1-4"
+    },
+    "auto_recall": {
+      "type": "bool",
+      "doc": "MEM:STAT:REC:AUTO",
+      "nullable": true
+    },
+    "last_error": {
+      "type": "str",
+      "doc": "first error read by the last action/clear_errors",
+      "nullable": true
+    },
+    "funcs": {
+      "type": "list",
+      "doc": "the waveform names offered"
+    }
+  }
+}
