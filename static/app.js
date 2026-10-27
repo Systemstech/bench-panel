@@ -678,7 +678,7 @@ const Scripts = {
       else if (a.type === 'choice') input = `<select id="${fid}">${a.choices.map(c =>
         `<option ${String(v) === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>`;
       else input = `<input type="text" id="${fid}" value="${esc(v)}" inputmode="${a.type === 'str' ? 'text' : 'decimal'}"
-        placeholder="${a.type}${a.min != null ? ' ≥ ' + a.min : ''}${a.max != null ? ' ≤ ' + a.max : ''}">`;
+        placeholder="${esc(a.type)}${a.min != null ? ' ≥ ' + esc(a.min) : ''}${a.max != null ? ' ≤ ' + esc(a.max) : ''}">`;
       return `<label for="${fid}">${lbl}</label><div>${input}</div>`
         + (a.help ? `<div class="help">${esc(a.help)}</div>` : '');
     };

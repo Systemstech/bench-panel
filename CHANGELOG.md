@@ -14,6 +14,9 @@ hashes quoted for earlier versions are not in it.
   `deploy.sh --unit` (checked against the installed unit: identical).
 - New `deploy/README.md`: setting up the service, the Apache proxy and the login.
 - Example addresses in code, tests and docs are the documentation range 192.0.2.x.
+- **Security:** a script header's `min` / `max` are now refused unless they are numbers,
+  and the Run form escapes them. Before, a header could put markup into the page
+  through either one. `tests/test_scripts.py` has both cases, and both fail on 1.6.1.
 
 ## 1.6.1 — 2026-09-25
 

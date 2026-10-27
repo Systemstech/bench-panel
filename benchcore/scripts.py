@@ -183,6 +183,10 @@ def check_header(h):
         for k in ("label", "help"):
             if k in a and not isinstance(a[k], str):
                 bad.append(f"{where}: '{k}' must be a string")
+        # min / max are shown in the Run form, so anything but a number is refused here.
+        for k in ("min", "max"):
+            if a.get(k) is not None and (not isinstance(a[k], (int, float)) or isinstance(a[k], bool)):
+                bad.append(f"{where}: '{k}' must be a number")
     return bad
 
 

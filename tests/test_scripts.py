@@ -58,6 +58,8 @@ MUTANTS = {
     "bad arg name": src().replace('"name": "n"', '"name": "N-1"'),
     "duplicate arg": src().replace('"name": "mode"', '"name": "n"'),
     "default out of range": src().replace('"default": 2', '"default": 20'),
+    "min not a number (markup)": src().replace('"min": 1', '"min": "\\"><img src=x onerror=alert(1)>"'),
+    "max is a bool": src().replace('"default": 2, "min": 1, "max": 9', '"default": 1, "min": 1, "max": True'),
     "choice with no choices": src().replace('"choices": ["a", "b"], ', ''),
     "choice default not a choice": src().replace('"default": "a"', '"default": "c"'),
     "uses not plugin ids": src().replace('"uses": []', '"uses": ["Not An Id!"]'),
